@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Settings, Copy, Check } from 'lucide-react';
+import { Settings, Copy, Check, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -36,6 +36,45 @@ const WebhookConfig = () => {
     });
   };
 
+  const handleTest = async () => {
+    if (!webhookUrl) {
+      toast({
+        title: "Error",
+        description: "Please enter a webhook URL first",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: 'Test connection from frontend',
+          timestamp: new Date().toISOString(),
+        }),
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Success!",
+          description: "Connection test successful",
+        });
+      } else {
+        throw new Error(`HTTP ${response.status}`);
+      }
+    } catch (error) {
+      toast({
+        title: "Connection Failed",
+        description: "Please check your webhook URL and ensure your n8n workflow is active",
+        variant: "destructive",
+      });
+    }
+  };
+
   React.useEffect(() => {
     const saved = localStorage.getItem('n8n-webhook-url');
     if (saved) {
@@ -51,7 +90,7 @@ const WebhookConfig = () => {
           n8n Webhook Configuration
         </CardTitle>
         <CardDescription>
-          Configure your n8n webhook URL to connect this frontend with your automation workflow
+          Configure your n8n webhook URL to connect this frontend with your AI automation workflow
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -61,7 +100,7 @@ const WebhookConfig = () => {
             <Input
               value={webhookUrl}
               onChange={(e) => setWebhookUrl(e.target.value)}
-              placeholder="https://your-n8n-instance.com/webhook/6ce34d61-2799-4d71-9a10-5a35d4f99602"
+              placeholder="https://your-n8n-instance.com/webhook/my_webhook"
               className="flex-1"
             />
             <Button
@@ -75,18 +114,44 @@ const WebhookConfig = () => {
           </div>
         </div>
         
-        <Button onClick={handleSave} disabled={!webhookUrl} className="w-full">
-          Save Configuration
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={handleSave} disabled={!webhookUrl} className="flex-1">
+            Save Configuration
+          </Button>
+          <Button onClick={handleTest} disabled={!webhookUrl} variant="outline" className="flex-1">
+            Test Connection
+          </Button>
+        </div>
 
         <div className="mt-6 p-4 bg-blue-50 rounded-lg">
           <h4 className="font-medium text-blue-900 mb-2">Setup Instructions:</h4>
           <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
-            <li>Copy your n8n webhook URL from the webhook node</li>
+            <li>Make sure your n8n workflow is <strong>active</strong></li>
+            <li>Copy your webhook URL from the webhook node (should end with '/my_webhook')</li>
             <li>Paste it in the field above and click "Save Configuration"</li>
-            <li>Make sure your n8n workflow is active</li>
-            <li>Test the connection by sending a message in the chat</li>
+            <li>Click "Test Connection" to verify everything works</li>
+            <li>Start chatting with your AI assistant!</li>
           </ol>
+        </div>
+
+        <div className="mt-4 p-4 bg-green-50 rounded-lg">
+          <h4 className="font-medium text-green-900 mb-2">Your n8n Workflow Features:</h4>
+          <ul className="text-sm text-green-800 space-y-1 list-disc list-inside">
+            <li><strong>Gmail Integration:</strong> Send emails through your Gmail account</li>
+            <li><strong>Google Calendar:</strong> Create calendar events and manage schedules</li>
+            <li><strong>AI Memory:</strong> Remembers conversation context</li>
+            <li><strong>Smart Responses:</strong> Powered by Google Gemini AI</li>
+          </ul>
+        </div>
+
+        <div className="mt-4 p-4 bg-amber-50 rounded-lg">
+          <h4 className="font-medium text-amber-900 mb-2">Important Notes:</h4>
+          <ul className="text-sm text-amber-800 space-y-1 list-disc list-inside">
+            <li>Ensure your n8n workflow is <strong>active</strong> before testing</li>
+            <li>Your webhook path should be: <code className="bg-amber-200 px-1 rounded">/webhook/my_webhook</code></li>
+            <li>Make sure your Google accounts are properly authenticated in n8n</li>
+            <li>The AI can handle natural language requests for emails and calendar events</li>
+          </ul>
         </div>
       </CardContent>
     </Card>

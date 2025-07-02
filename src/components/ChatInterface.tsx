@@ -1,10 +1,11 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Loader2 } from 'lucide-react';
+import { Send, Bot, User, Loader2, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
+import WebhookConfig from './WebhookConfig';
 
 interface Message {
   id: string;
@@ -18,12 +19,13 @@ const ChatInterface = () => {
     {
       id: '1',
       type: 'bot',
-      content: "Hi! I'm your AI assistant. I can help you send emails, create calendar events, and work with dates. What would you like me to help you with today?",
+      content: "Hi! I'm your AI assistant powered by n8n. I can help you send emails through Gmail and create calendar events in Google Calendar. What would you like me to help you with today?",
       timestamp: new Date(),
     },
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showConfig, setShowConfig] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -47,45 +49,71 @@ const ChatInterface = () => {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const currentInput = inputValue;
     setInputValue('');
     setIsLoading(true);
 
     try {
-      // Replace this URL with your actual n8n webhook URL
-      const webhookUrl = 'https://your-n8n-instance.com/webhook/6ce34d61-2799-4d71-9a10-5a35d4f99602';
+      // Get webhook URL from localStorage or use default
+      const savedWebhookUrl = localStorage.getItem('n8n-webhook-url');
+      const webhookUrl = savedWebhookUrl || 'https://your-n8n-instance.com/webhook/my_webhook';
       
+      console.log('Sending message to n8n:', { message: currentInput, webhookUrl });
+
       const response = await fetch(webhookUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          message: inputValue,
+          message: currentInput,
           timestamp: new Date().toISOString(),
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to send message');
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
       const result = await response.json();
+      console.log('n8n response:', result);
       
+      // Handle different response formats from n8n
+      let botResponse = 'Task completed successfully!';
+      
+      if (typeof result === 'string') {
+        botResponse = result;
+      } else if (result.response) {
+        botResponse = result.response;
+      } else if (result.output) {
+        botResponse = result.output;
+      } else if (result.text) {
+        botResponse = result.text;
+      } else if (result.message) {
+        botResponse = result.message;
+      }
+
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'bot',
-        content: result.response || result.output || 'Task completed successfully!',
+        content: botResponse,
         timestamp: new Date(),
       };
 
       setMessages(prev => [...prev, botMessage]);
+
+      toast({
+        title: "Success",
+        description: "Message processed successfully",
+      });
+
     } catch (error) {
       console.error('Error sending message:', error);
       
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'bot',
-        content: "I'm sorry, I encountered an error processing your request. Please make sure the webhook URL is configured correctly and try again.",
+        content: "I'm sorry, I encountered an error processing your request. Please make sure your n8n workflow is active and the webhook URL is configured correctly.",
         timestamp: new Date(),
       };
 
@@ -93,7 +121,7 @@ const ChatInterface = () => {
       
       toast({
         title: "Connection Error",
-        description: "Please check your n8n webhook configuration",
+        description: "Please check your n8n webhook configuration and ensure your workflow is active",
         variant: "destructive",
       });
     } finally {
@@ -108,18 +136,43 @@ const ChatInterface = () => {
     });
   };
 
+  if (showConfig) {
+    return (
+      <div className="flex flex-col h-full max-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 p-4">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold">Configuration</h2>
+          <Button variant="outline" onClick={() => setShowConfig(false)}>
+            Back to Chat
+          </Button>
+        </div>
+        <WebhookConfig />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col h-full max-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       {/* Header */}
       <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200/50 p-4 shadow-sm">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-            <Bot className="w-6 h-6 text-white" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+              <Bot className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-xl font-semibold text-gray-800">AI Assistant</h1>
+              <p className="text-sm text-gray-600">Powered by n8n automation</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-semibold text-gray-800">AI Assistant</h1>
-            <p className="text-sm text-gray-600">Powered by n8n automation</p>
-          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowConfig(true)}
+            className="flex items-center gap-2"
+          >
+            <Settings className="w-4 h-4" />
+            Config
+          </Button>
         </div>
       </div>
 
@@ -147,7 +200,7 @@ const ChatInterface = () => {
                   ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white border-0 shadow-lg'
                   : 'bg-white/70 backdrop-blur-sm border-gray-200/50 shadow-md'
               }`}>
-                <p className="text-sm leading-relaxed">{message.content}</p>
+                <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
                 <p className={`text-xs mt-2 ${
                   message.type === 'user' ? 'text-green-100' : 'text-gray-500'
                 }`}>
@@ -167,7 +220,7 @@ const ChatInterface = () => {
               <Card className="p-4 bg-white/70 backdrop-blur-sm border-gray-200/50 shadow-md">
                 <div className="flex items-center gap-2">
                   <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
-                  <p className="text-sm text-gray-600">AI is thinking...</p>
+                  <p className="text-sm text-gray-600">AI is processing your request...</p>
                 </div>
               </Card>
             </div>
@@ -200,7 +253,7 @@ const ChatInterface = () => {
           </Button>
         </form>
         <p className="text-xs text-gray-500 mt-2 text-center">
-          Try: "Send an email to john@example.com" or "Create a meeting for tomorrow at 2 PM"
+          Try: "Send an email to john@example.com about our meeting" or "Create a meeting for tomorrow at 2 PM"
         </p>
       </div>
     </div>
