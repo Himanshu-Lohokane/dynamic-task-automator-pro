@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Settings, Copy, Check, ExternalLink } from 'lucide-react';
+import { Settings, Copy, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,6 +29,15 @@ const WebhookConfig = () => {
   };
 
   const handleSave = () => {
+    if (!webhookUrl.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a webhook URL",
+        variant: "destructive",
+      });
+      return;
+    }
+
     localStorage.setItem('n8n-webhook-url', webhookUrl);
     toast({
       title: "Saved!",
@@ -126,9 +135,9 @@ const WebhookConfig = () => {
         <div className="mt-6 p-4 bg-blue-50 rounded-lg">
           <h4 className="font-medium text-blue-900 mb-2">Setup Instructions:</h4>
           <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
+            <li>Copy your n8n webhook URL (ends with <code className="bg-blue-200 px-1 rounded">/webhook/my_webhook</code>)</li>
             <li>Make sure your n8n workflow is <strong>active</strong></li>
-            <li>Copy your webhook URL from the webhook node (should end with '/my_webhook')</li>
-            <li>Paste it in the field above and click "Save Configuration"</li>
+            <li>Paste the URL in the field above and click "Save Configuration"</li>
             <li>Click "Test Connection" to verify everything works</li>
             <li>Start chatting with your AI assistant!</li>
           </ol>
@@ -147,8 +156,8 @@ const WebhookConfig = () => {
         <div className="mt-4 p-4 bg-amber-50 rounded-lg">
           <h4 className="font-medium text-amber-900 mb-2">Important Notes:</h4>
           <ul className="text-sm text-amber-800 space-y-1 list-disc list-inside">
+            <li>Your webhook accepts POST requests with JSON data</li>
             <li>Ensure your n8n workflow is <strong>active</strong> before testing</li>
-            <li>Your webhook path should be: <code className="bg-amber-200 px-1 rounded">/webhook/my_webhook</code></li>
             <li>Make sure your Google accounts are properly authenticated in n8n</li>
             <li>The AI can handle natural language requests for emails and calendar events</li>
           </ul>

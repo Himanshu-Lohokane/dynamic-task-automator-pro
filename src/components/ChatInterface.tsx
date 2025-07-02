@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, Loader2, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -19,7 +18,7 @@ const ChatInterface = () => {
     {
       id: '1',
       type: 'bot',
-      content: "Hi! I'm your AI assistant powered by n8n. I can help you send emails through Gmail and create calendar events in Google Calendar. What would you like me to help you with today?",
+      content: "Hi! I'm your AI assistant powered by n8n. I can help you send emails through Gmail and create calendar events in Google Calendar. Please configure your webhook URL first, then we can start chatting!",
       timestamp: new Date(),
     },
   ]);
@@ -41,6 +40,18 @@ const ChatInterface = () => {
     
     if (!inputValue.trim() || isLoading) return;
 
+    // Check if webhook URL is configured
+    const savedWebhookUrl = localStorage.getItem('n8n-webhook-url');
+    if (!savedWebhookUrl) {
+      toast({
+        title: "Configuration Required",
+        description: "Please configure your n8n webhook URL first",
+        variant: "destructive",
+      });
+      setShowConfig(true);
+      return;
+    }
+
     const userMessage: Message = {
       id: Date.now().toString(),
       type: 'user',
@@ -54,13 +65,9 @@ const ChatInterface = () => {
     setIsLoading(true);
 
     try {
-      // Get webhook URL from localStorage or use default
-      const savedWebhookUrl = localStorage.getItem('n8n-webhook-url');
-      const webhookUrl = savedWebhookUrl || 'https://your-n8n-instance.com/webhook/my_webhook';
-      
-      console.log('Sending message to n8n:', { message: currentInput, webhookUrl });
+      console.log('Sending message to n8n:', { message: currentInput, webhookUrl: savedWebhookUrl });
 
-      const response = await fetch(webhookUrl, {
+      const response = await fetch(savedWebhookUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -121,7 +128,7 @@ const ChatInterface = () => {
       
       toast({
         title: "Connection Error",
-        description: "Please check your n8n webhook configuration and ensure your workflow is active",
+        description: "Please check your webhook configuration and ensure your n8n workflow is active",
         variant: "destructive",
       });
     } finally {
