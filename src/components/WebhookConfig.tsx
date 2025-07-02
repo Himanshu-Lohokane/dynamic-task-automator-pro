@@ -84,10 +84,17 @@ const WebhookConfig = () => {
     }
   };
 
+  const handleUseProduction = () => {
+    setWebhookUrl('https://himanshu5613.app.n8n.cloud/webhook/my_webhook');
+  };
+
   React.useEffect(() => {
     const saved = localStorage.getItem('n8n-webhook-url');
     if (saved) {
       setWebhookUrl(saved);
+    } else {
+      // Set production URL as default
+      setWebhookUrl('https://himanshu5613.app.n8n.cloud/webhook/my_webhook');
     }
   }, []);
 
@@ -109,7 +116,7 @@ const WebhookConfig = () => {
             <Input
               value={webhookUrl}
               onChange={(e) => setWebhookUrl(e.target.value)}
-              placeholder="https://your-n8n-instance.com/webhook/my_webhook"
+              placeholder="https://your-n8n-instance.app.n8n.cloud/webhook/my_webhook"
               className="flex-1"
             />
             <Button
@@ -121,6 +128,14 @@ const WebhookConfig = () => {
               {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
             </Button>
           </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleUseProduction}
+            className="mt-2 text-blue-600 hover:text-blue-700"
+          >
+            Use Production URL
+          </Button>
         </div>
         
         <div className="flex gap-2">
@@ -132,20 +147,25 @@ const WebhookConfig = () => {
           </Button>
         </div>
 
-        <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-          <h4 className="font-medium text-blue-900 mb-2">Setup Instructions:</h4>
-          <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
-            <li>Copy your n8n webhook URL (ends with <code className="bg-blue-200 px-1 rounded">/webhook/my_webhook</code>)</li>
+        <div className="mt-6 p-4 bg-green-50 rounded-lg">
+          <h4 className="font-medium text-green-900 mb-2">Production Ready!</h4>
+          <p className="text-sm text-green-800 mb-3">
+            Your production webhook URL is: <br />
+            <code className="bg-green-200 px-2 py-1 rounded text-xs break-all">
+              https://himanshu5613.app.n8n.cloud/webhook/my_webhook
+            </code>
+          </p>
+          <ol className="text-sm text-green-800 space-y-1 list-decimal list-inside">
             <li>Make sure your n8n workflow is <strong>active</strong></li>
-            <li>Paste the URL in the field above and click "Save Configuration"</li>
+            <li>Click "Save Configuration" to use the production URL</li>
             <li>Click "Test Connection" to verify everything works</li>
             <li>Start chatting with your AI assistant!</li>
           </ol>
         </div>
 
-        <div className="mt-4 p-4 bg-green-50 rounded-lg">
-          <h4 className="font-medium text-green-900 mb-2">Your n8n Workflow Features:</h4>
-          <ul className="text-sm text-green-800 space-y-1 list-disc list-inside">
+        <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+          <h4 className="font-medium text-blue-900 mb-2">Your n8n Workflow Features:</h4>
+          <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
             <li><strong>Gmail Integration:</strong> Send emails through your Gmail account</li>
             <li><strong>Google Calendar:</strong> Create calendar events and manage schedules</li>
             <li><strong>AI Memory:</strong> Remembers conversation context</li>
