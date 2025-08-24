@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { log } from "./vite";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // put application routes here
@@ -12,17 +13,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Proxy route for n8n webhook to avoid CORS issues
   app.post("/api/webhook/n8n", async (req, res) => {
     try {
-      console.log('🔄 [SERVER] Received webhook proxy request:', {
-        body: req.body,
-        headers: req.headers,
-        timestamp: new Date().toISOString()
-      });
+      log('🔄 [WEBHOOK] Received proxy request');
+      log(`📋 [WEBHOOK] Request body: ${JSON.stringify(req.body)}`);
 
       const { message, timestamp, source } = req.body;
       
       if (!message) {
-        console.error('❌ [SERVER] Missing message in request body');
+        log('❌ [WEBHOOK] Missing message in request body');
         return res.status(400).json({ 
+          success: false,
           error: 'Missing message in request body',
           received: req.body 
         });
@@ -31,17 +30,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // n8n webhook URL 
       const webhookUrl = 'https://kasimlohar.app.n8n.cloud/webhook-test/bdd9a358-e97e-4da2-8aed-6fd474dec5a7';
       
-      console.log('📤 [SERVER] Forwarding to n8n webhook:', {
-        url: webhookUrl,
-        payload: { message, timestamp, source }
-      });
+      log(`📤 [WEBHOOK] Forwarding to n8n: ${webhookUrl}`);
 
       // Forward request to n8n webhook
       const response = await fetch(webhookUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'User-Agent': 'Replit-ChatBot-Proxy/1.0'
+          'User-Agent': 'Replit-ChatBot-Proxy/1.0',
+          'Accept': 'application/json, text/plain, */*'
         },
         body: JSON.stringify({
           message,
@@ -50,55 +47,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
         })
       });
 
-      console.log('📥 [SERVER] n8n webhook response:', {
-        status: response.status,
-        statusText: response.statusText,
-        headers: Object.fromEntries(response.headers.entries())
-      });
+      log(`📥 [WEBHOOK] n8n response: ${response.status} ${response.statusText}`);
 
       if (!response.ok) {
-        console.error('❌ [SERVER] n8n webhook error:', {
-          status: response.status,
-          statusText: response.statusText
-        });
-        return res.status(response.status).json({
+        log(`❌ [WEBHOOK] n8n error: ${response.status} ${response.statusText}`);
+        return res.status(200).json({
+          success: false,
           error: `n8n webhook returned ${response.status}: ${response.statusText}`,
           details: {
             status: response.status,
-            statusText: response.statusText
+            statusText: response.statusText,
+            webhookUrl: webhookUrl
           }
         });
       }
 
       // Get response text first to handle any format
       const responseText = await response.text();
-      console.log('📄 [SERVER] Raw n8n response:', responseText);
+      log(`📄 [WEBHOOK] Raw n8n response: ${responseText.substring(0, 200)}...`);
 
       let result;
       try {
         result = JSON.parse(responseText);
-        console.log('✅ [SERVER] Parsed n8n JSON response:', result);
+        log('✅ [WEBHOOK] Parsed n8n JSON response successfully');
       } catch (parseError) {
-        console.log('📝 [SERVER] n8n response was not JSON, treating as text');
+        log('📝 [WEBHOOK] n8n response was not JSON, treating as text');
         result = { message: responseText, raw: responseText };
       }
 
       // Return the result to frontend
-      res.json({
+      const successResponse = {
         success: true,
         data: result,
         timestamp: new Date().toISOString(),
-        source: 'replit-backend-proxy'
-      });
+        source: 'replit-backend-proxy',
+        webhookUrl: webhookUrl
+      };
+
+      log('✅ [WEBHOOK] Sending success response to frontend');
+      res.json(successResponse);
 
     } catch (error) {
-      console.error('❌ [SERVER] Webhook proxy error:', {
-        error: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : 'No stack trace',
-        body: req.body
-      });
+      log(`❌ [WEBHOOK] Proxy error: ${error instanceof Error ? error.message : 'Unknown error'}`);
 
-      res.status(500).json({
+      res.status(200).json({
+        success: false,
         error: 'Internal server error while proxying to n8n webhook',
         details: error instanceof Error ? error.message : 'Unknown error',
         timestamp: new Date().toISOString()
