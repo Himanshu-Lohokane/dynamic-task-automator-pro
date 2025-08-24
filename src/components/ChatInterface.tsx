@@ -1,10 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Loader2, Settings } from 'lucide-react';
+import { Send, Bot, User, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
-import WebhookConfig from './WebhookConfig';
 
 interface Message {
   id: string;
@@ -24,7 +23,6 @@ const ChatInterface = () => {
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [showConfig, setShowConfig] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -40,17 +38,8 @@ const ChatInterface = () => {
     
     if (!inputValue.trim() || isLoading) return;
 
-    // Check if webhook URL is configured
-    const savedWebhookUrl = localStorage.getItem('n8n-webhook-url');
-    if (!savedWebhookUrl) {
-      toast({
-        title: "Configuration Required",
-        description: "Please configure your n8n webhook URL first",
-        variant: "destructive",
-      });
-      setShowConfig(true);
-      return;
-    }
+    // Hardcoded webhook URL
+    const webhookUrl = 'https://kasimlohar.app.n8n.cloud/webhook-test/bdd9a358-e97e-4da2-8aed-6fd474dec5a7';
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -65,9 +54,9 @@ const ChatInterface = () => {
     setIsLoading(true);
 
     try {
-      console.log('Sending message to n8n:', { message: currentInput, webhookUrl: savedWebhookUrl });
+      console.log('Sending message to n8n:', { message: currentInput, webhookUrl: webhookUrl });
 
-      const response = await fetch(savedWebhookUrl, {
+      const response = await fetch(webhookUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -143,19 +132,7 @@ const ChatInterface = () => {
     });
   };
 
-  if (showConfig) {
-    return (
-      <div className="flex flex-col h-full max-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 p-4">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold">Configuration</h2>
-          <Button variant="outline" onClick={() => setShowConfig(false)}>
-            Back to Chat
-          </Button>
-        </div>
-        <WebhookConfig />
-      </div>
-    );
-  }
+
 
   return (
     <div className="flex flex-col h-full max-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
@@ -171,15 +148,6 @@ const ChatInterface = () => {
               <p className="text-sm text-gray-600">Powered by n8n automation</p>
             </div>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowConfig(true)}
-            className="flex items-center gap-2"
-          >
-            <Settings className="w-4 h-4" />
-            Config
-          </Button>
         </div>
       </div>
 
@@ -261,6 +229,9 @@ const ChatInterface = () => {
         </form>
         <p className="text-xs text-gray-500 mt-2 text-center">
           Try: "Send an email to john@example.com about our meeting" or "Create a meeting for tomorrow at 2 PM"
+        </p>
+        <p className="text-xs text-gray-400 mt-1 text-center">
+          Connected to: kasimlohar.app.n8n.cloud
         </p>
       </div>
     </div>
