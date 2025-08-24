@@ -116,6 +116,11 @@ const ChatInterface = () => {
       const actualN8nResult = result.data;
       console.log('🔄 [DEBUG] n8n webhook response data:', actualN8nResult);
       
+      // Check for empty responses
+      if (actualN8nResult && actualN8nResult.raw === "") {
+        console.log('⚠️ [DEBUG] n8n returned EMPTY response - workflow may have errors');
+      }
+      
       // Handle different response formats from n8n
       let botResponse = 'Task completed successfully!';
       
@@ -137,8 +142,13 @@ const ChatInterface = () => {
         botResponse = actualN8nResult.message;
         console.log('📝 [DEBUG] Using result.message field');
       } else if (actualN8nResult && actualN8nResult.raw) {
-        botResponse = actualN8nResult.raw;
-        console.log('📝 [DEBUG] Using result.raw field (plain text from n8n)');
+        if (actualN8nResult.raw.trim() === "") {
+          botResponse = "⚠️ n8n workflow returned empty response. Check your workflow for errors, especially the LangChain memory buffer configuration.";
+          console.log('⚠️ [DEBUG] Empty raw response from n8n workflow');
+        } else {
+          botResponse = actualN8nResult.raw;
+          console.log('📝 [DEBUG] Using result.raw field (plain text from n8n)');
+        }
       } else if (actualN8nResult && actualN8nResult.data) {
         botResponse = JSON.stringify(actualN8nResult.data);
         console.log('📝 [DEBUG] Using result.data field (stringified)');

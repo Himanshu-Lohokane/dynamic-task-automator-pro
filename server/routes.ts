@@ -64,7 +64,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get response text first to handle any format
       const responseText = await response.text();
-      log(`📄 [WEBHOOK] Raw n8n response: ${responseText.substring(0, 200)}...`);
+      log(`📄 [WEBHOOK] Raw n8n response (full): "${responseText}"`);
+      log(`📏 [WEBHOOK] Response length: ${responseText.length} characters`);
 
       let result;
       try {
