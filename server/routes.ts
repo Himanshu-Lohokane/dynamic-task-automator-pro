@@ -42,6 +42,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     },
   });
 
+  // Configure multer for video uploads
+  const uploadVideo = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+      fileSize: 100 * 1024 * 1024, // 100MB limit for videos
+    },
+    fileFilter: (req, file, cb) => {
+      if (file.mimetype.startsWith('video/')) {
+        cb(null, true);
+      } else {
+        cb(new Error('Only video files are allowed!'));
+      }
+    },
+  });
+
+  // Configure multer for audio uploads
+  const uploadAudio = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+      fileSize: 50 * 1024 * 1024, // 50MB limit for audio
+    },
+    fileFilter: (req, file, cb) => {
+      if (file.mimetype.startsWith('audio/')) {
+        cb(null, true);
+      } else {
+        cb(new Error('Only audio files are allowed!'));
+      }
+    },
+  });
+
   // Proxy route for n8n webhook to avoid CORS issues
   app.post("/api/webhook/n8n", async (req, res) => {
     try {
@@ -350,6 +380,224 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(200).json({
         success: false,
         error: 'Internal server error while processing image upload',
+        details: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+
+  // Video Upload endpoint
+  app.post("/api/upload-video", uploadVideo.single('file'), async (req, res) => {
+    try {
+      log('🎬 [VIDEO] Received video upload request');
+      
+      if (!req.file) {
+        log('❌ [VIDEO] No file in request');
+        return res.status(400).json({ 
+          success: false,
+          error: 'No file uploaded',
+          received: req.body 
+        });
+      }
+
+      const { webhookUrl, fileName, timestamp } = req.body;
+      
+      if (!webhookUrl) {
+        log('❌ [VIDEO] Missing webhookUrl in request body');
+        return res.status(400).json({ 
+          success: false,
+          error: 'Missing webhookUrl in request body',
+          received: req.body 
+        });
+      }
+
+      log(`📋 [VIDEO] Processing file: ${req.file.originalname} (${req.file.size} bytes)`);
+      log(`📤 [VIDEO] Forwarding to n8n: ${webhookUrl}`);
+
+      // Prepare form data for n8n
+      const formData = new NodeFormData();
+      formData.append('file', new Blob([req.file.buffer], { type: req.file.mimetype }), req.file.originalname);
+      formData.append('fileName', fileName || req.file.originalname);
+      formData.append('timestamp', timestamp || new Date().toISOString());
+      formData.append('source', 'replit-video-uploader');
+
+      // Forward to n8n webhook
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        body: formData as any,
+        headers: {
+          'User-Agent': 'Replit-Video-Proxy/1.0',
+        }
+      });
+
+      log(`📥 [VIDEO] n8n response: ${response.status} ${response.statusText}`);
+
+      if (!response.ok) {
+        log(`❌ [VIDEO] n8n error: ${response.status} ${response.statusText}`);
+        return res.status(200).json({
+          success: false,
+          error: `n8n webhook returned ${response.status}: ${response.statusText}`,
+          details: {
+            status: response.status,
+            statusText: response.statusText,
+            webhookUrl: webhookUrl
+          }
+        });
+      }
+
+      // Get response text first to handle any format
+      const responseText = await response.text();
+      log(`📄 [VIDEO] Raw n8n response (full): "${responseText}"`);
+      log(`📏 [VIDEO] Response length: ${responseText.length} characters`);
+
+      let result;
+      try {
+        result = JSON.parse(responseText);
+        log('✅ [VIDEO] Parsed n8n JSON response successfully');
+      } catch (parseError) {
+        log('📝 [VIDEO] n8n response was not JSON, treating as text');
+        result = { message: responseText, raw: responseText };
+      }
+
+      // Return the result to frontend
+      const successResponse = {
+        success: true,
+        data: result,
+        timestamp: new Date().toISOString(),
+        source: 'replit-video-backend-proxy',
+        webhookUrl: webhookUrl,
+        fileName: req.file.originalname,
+        fileSize: req.file.size
+      };
+
+      log('✅ [VIDEO] Sending success response to frontend');
+      res.json(successResponse);
+
+    } catch (error) {
+      log(`❌ [VIDEO] Upload error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+
+      if (error instanceof multer.MulterError) {
+        if (error.code === 'LIMIT_FILE_SIZE') {
+          return res.status(200).json({
+            success: false,
+            error: 'File too large. Maximum size is 100MB.',
+            details: error.message
+          });
+        }
+      }
+
+      res.status(200).json({
+        success: false,
+        error: 'Internal server error while processing video upload',
+        details: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+
+  // Audio Upload endpoint
+  app.post("/api/upload-audio", uploadAudio.single('file'), async (req, res) => {
+    try {
+      log('🎵 [AUDIO] Received audio upload request');
+      
+      if (!req.file) {
+        log('❌ [AUDIO] No file in request');
+        return res.status(400).json({ 
+          success: false,
+          error: 'No file uploaded',
+          received: req.body 
+        });
+      }
+
+      const { webhookUrl, fileName, timestamp } = req.body;
+      
+      if (!webhookUrl) {
+        log('❌ [AUDIO] Missing webhookUrl in request body');
+        return res.status(400).json({ 
+          success: false,
+          error: 'Missing webhookUrl in request body',
+          received: req.body 
+        });
+      }
+
+      log(`📋 [AUDIO] Processing file: ${req.file.originalname} (${req.file.size} bytes)`);
+      log(`📤 [AUDIO] Forwarding to n8n: ${webhookUrl}`);
+
+      // Prepare form data for n8n
+      const formData = new NodeFormData();
+      formData.append('file', new Blob([req.file.buffer], { type: req.file.mimetype }), req.file.originalname);
+      formData.append('fileName', fileName || req.file.originalname);
+      formData.append('timestamp', timestamp || new Date().toISOString());
+      formData.append('source', 'replit-audio-uploader');
+
+      // Forward to n8n webhook
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        body: formData as any,
+        headers: {
+          'User-Agent': 'Replit-Audio-Proxy/1.0',
+        }
+      });
+
+      log(`📥 [AUDIO] n8n response: ${response.status} ${response.statusText}`);
+
+      if (!response.ok) {
+        log(`❌ [AUDIO] n8n error: ${response.status} ${response.statusText}`);
+        return res.status(200).json({
+          success: false,
+          error: `n8n webhook returned ${response.status}: ${response.statusText}`,
+          details: {
+            status: response.status,
+            statusText: response.statusText,
+            webhookUrl: webhookUrl
+          }
+        });
+      }
+
+      // Get response text first to handle any format
+      const responseText = await response.text();
+      log(`📄 [AUDIO] Raw n8n response (full): "${responseText}"`);
+      log(`📏 [AUDIO] Response length: ${responseText.length} characters`);
+
+      let result;
+      try {
+        result = JSON.parse(responseText);
+        log('✅ [AUDIO] Parsed n8n JSON response successfully');
+      } catch (parseError) {
+        log('📝 [AUDIO] n8n response was not JSON, treating as text');
+        result = { message: responseText, raw: responseText };
+      }
+
+      // Return the result to frontend
+      const successResponse = {
+        success: true,
+        data: result,
+        timestamp: new Date().toISOString(),
+        source: 'replit-audio-backend-proxy',
+        webhookUrl: webhookUrl,
+        fileName: req.file.originalname,
+        fileSize: req.file.size
+      };
+
+      log('✅ [AUDIO] Sending success response to frontend');
+      res.json(successResponse);
+
+    } catch (error) {
+      log(`❌ [AUDIO] Upload error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+
+      if (error instanceof multer.MulterError) {
+        if (error.code === 'LIMIT_FILE_SIZE') {
+          return res.status(200).json({
+            success: false,
+            error: 'File too large. Maximum size is 50MB.',
+            details: error.message
+          });
+        }
+      }
+
+      res.status(200).json({
+        success: false,
+        error: 'Internal server error while processing audio upload',
         details: error instanceof Error ? error.message : 'Unknown error',
         timestamp: new Date().toISOString()
       });
