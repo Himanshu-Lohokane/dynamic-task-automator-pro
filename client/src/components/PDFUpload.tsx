@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Progress } from '@/components/ui/progress';
 import { toast } from '@/hooks/use-toast';
+import { useDocumentTracker } from '@/hooks/useDocumentTracker';
 
 interface UploadResult {
   success: boolean;
@@ -13,6 +14,7 @@ interface UploadResult {
 }
 
 const PDFUpload = () => {
+  const { addDocument } = useDocumentTracker();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -124,6 +126,18 @@ const PDFUpload = () => {
         toast({
           title: "Upload successful!",
           description: `${selectedFile.name} has been added to the knowledge base.`,
+        });
+
+        // Track the document in the dashboard
+        const extension = selectedFile.name.split('.').pop() || 'pdf';
+        addDocument({
+          fileName: selectedFile.name,
+          fileSize: selectedFile.size,
+          fileType: 'pdf',
+          extension: extension,
+          webhookMode: isProduction ? 'production' : 'test',
+          status: 'success',
+          description: result.data?.output || result.data?.message || 'PDF processed and embedded into knowledge base'
         });
 
         // Clear file selection after successful upload
