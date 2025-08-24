@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Loader2 } from 'lucide-react';
+import { Send, Bot, User, Loader2, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
 import { toast } from '@/hooks/use-toast';
 
 interface Message {
@@ -17,12 +18,17 @@ const ChatInterface = () => {
     {
       id: '1',
       type: 'bot',
-      content: "Hi! I'm your AI assistant powered by n8n. I can help you send emails through Gmail and create calendar events in Google Calendar. Please configure your webhook URL first, then we can start chatting!",
+      content: "Hi! I'm your AI assistant powered by n8n. I can help you send emails through Gmail and create calendar events in Google Calendar. You can toggle between test and production modes using the switch above!",
       timestamp: new Date(),
     },
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isProduction, setIsProduction] = useState(() => {
+    // Load from localStorage, default to test mode (false)
+    const saved = localStorage.getItem('n8n-webhook-mode');
+    return saved ? JSON.parse(saved) : false;
+  });
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -33,13 +39,26 @@ const ChatInterface = () => {
     scrollToBottom();
   }, [messages]);
 
+  useEffect(() => {
+    // Save webhook mode to localStorage
+    localStorage.setItem('n8n-webhook-mode', JSON.stringify(isProduction));
+  }, [isProduction]);
+
+  const getWebhookUrl = () => {
+    if (isProduction) {
+      return 'https://kasimlohar.app.n8n.cloud/webhook/bdd9a358-e97e-4da2-8aed-6fd474dec5a7';
+    } else {
+      return 'https://kasimlohar.app.n8n.cloud/webhook-test/bdd9a358-e97e-4da2-8aed-6fd474dec5a7';
+    }
+  };
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!inputValue.trim() || isLoading) return;
 
-    // Hardcoded webhook URL
-    const webhookUrl = 'https://kasimlohar.app.n8n.cloud/webhook-test/bdd9a358-e97e-4da2-8aed-6fd474dec5a7';
+    // Get current webhook URL based on toggle
+    const webhookUrl = getWebhookUrl();
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -81,7 +100,8 @@ const ChatInterface = () => {
         body: JSON.stringify({
           message: currentInput,
           timestamp: new Date().toISOString(),
-          source: 'replit-chat-frontend'
+          source: 'replit-chat-frontend',
+          webhookUrl: webhookUrl // Pass the selected webhook URL
         }),
       });
 
@@ -244,6 +264,44 @@ The system uses a backend proxy to avoid CORS issues. Check the server logs as w
               <h1 className="text-xl font-semibold text-gray-800">AI Assistant</h1>
               <p className="text-sm text-gray-600">Powered by n8n automation</p>
             </div>
+          </div>
+          
+          {/* Webhook Mode Toggle */}
+          <div className="flex items-center gap-3" data-testid="webhook-mode-toggle">
+            <div className="flex items-center gap-2">
+              <Settings className="w-4 h-4 text-gray-600" />
+              <span className={`text-sm font-medium ${!isProduction ? 'text-orange-600' : 'text-gray-500'}`}>
+                Test
+              </span>
+              <Switch
+                checked={isProduction}
+                onCheckedChange={(checked) => {
+                  setIsProduction(checked);
+                  toast({
+                    title: checked ? "Production Mode" : "Test Mode",
+                    description: checked ? "Using production webhook" : "Using test webhook",
+                  });
+                }}
+                data-testid="production-mode-switch"
+              />
+              <span className={`text-sm font-medium ${isProduction ? 'text-green-600' : 'text-gray-500'}`}>
+                Production
+              </span>
+            </div>
+          </div>
+        </div>
+        
+        {/* Mode Indicator */}
+        <div className="mt-2">
+          <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+            isProduction 
+              ? 'bg-green-100 text-green-800' 
+              : 'bg-orange-100 text-orange-800'
+          }`}>
+            <div className={`w-2 h-2 rounded-full ${
+              isProduction ? 'bg-green-500' : 'bg-orange-500'
+            }`} />
+            {isProduction ? 'Production Mode' : 'Test Mode'}
           </div>
         </div>
       </div>

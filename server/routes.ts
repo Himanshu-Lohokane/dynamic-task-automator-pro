@@ -16,7 +16,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       log('🔄 [WEBHOOK] Received proxy request');
       log(`📋 [WEBHOOK] Request body: ${JSON.stringify(req.body)}`);
 
-      const { message, timestamp, source } = req.body;
+      const { message, timestamp, source, webhookUrl } = req.body;
       
       if (!message) {
         log('❌ [WEBHOOK] Missing message in request body');
@@ -27,8 +27,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // n8n webhook URL 
-      const webhookUrl = 'https://kasimlohar.app.n8n.cloud/webhook-test/bdd9a358-e97e-4da2-8aed-6fd474dec5a7';
+      if (!webhookUrl) {
+        log('❌ [WEBHOOK] Missing webhookUrl in request body');
+        return res.status(400).json({ 
+          success: false,
+          error: 'Missing webhookUrl in request body',
+          received: req.body 
+        });
+      }
       
       log(`📤 [WEBHOOK] Forwarding to n8n: ${webhookUrl}`);
 
