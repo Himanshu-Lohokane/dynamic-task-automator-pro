@@ -53,41 +53,141 @@ const ChatInterface = () => {
     setInputValue('');
     setIsLoading(true);
 
-    try {
-      console.log('Sending message to n8n:', { message: currentInput, webhookUrl: webhookUrl });
+    // Debug: Log browser environment details
+    console.log('🔍 [DEBUG] Browser debugging info:', {
+      userAgent: navigator.userAgent,
+      currentOrigin: window.location.origin,
+      targetWebhook: webhookUrl,
+      timestamp: new Date().toISOString()
+    });
 
-      const response = await fetch(webhookUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+    let response: Response;
+    let usingBackendProxy = false;
+
+    try {
+      console.log('📤 [DEBUG] Preparing to send message to n8n:', { 
+        message: currentInput, 
+        webhookUrl: webhookUrl,
+        requestPayload: {
           message: currentInput,
           timestamp: new Date().toISOString(),
-        }),
+        }
+      });
+
+      // Try direct fetch first with additional headers for CORS
+      try {
+        console.log('🔄 [DEBUG] Attempting direct connection to n8n webhook...');
+        response = await fetch(webhookUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            // Add headers that might help with CORS
+            'Origin': window.location.origin,
+          },
+          // Add credentials if needed
+          credentials: 'omit',
+          body: JSON.stringify({
+            message: currentInput,
+            timestamp: new Date().toISOString(),
+            source: 'replit-chat-frontend-direct'
+          }),
+        });
+        
+        console.log('✅ [DEBUG] Direct connection succeeded');
+      } catch (directError) {
+        console.log('⚠️ [DEBUG] Direct connection failed, trying backend proxy:', directError);
+        usingBackendProxy = true;
+        
+        // Fallback to backend proxy
+        response = await fetch('/api/webhook/n8n', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: JSON.stringify({
+            message: currentInput,
+            timestamp: new Date().toISOString(),
+            source: 'replit-chat-frontend-proxy'
+          }),
+        });
+        
+        console.log('✅ [DEBUG] Backend proxy connection succeeded');
+      }
+
+      console.log('📥 [DEBUG] Raw response received:', {
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries()),
+        url: response.url,
+        type: response.type,
+        usingBackendProxy: usingBackendProxy
       });
 
       if (!response.ok) {
+        console.error('❌ [DEBUG] HTTP Error Details:', {
+          status: response.status,
+          statusText: response.statusText,
+          url: response.url,
+          usingBackendProxy: usingBackendProxy
+        });
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      const result = await response.json();
-      console.log('n8n response:', result);
+      // Try to get response text first to see raw content
+      const responseText = await response.text();
+      console.log('📄 [DEBUG] Raw response text:', responseText);
+
+      let result;
+      try {
+        result = JSON.parse(responseText);
+        console.log('✅ [DEBUG] Parsed JSON response:', result);
+      } catch (parseError) {
+        console.error('❌ [DEBUG] JSON Parse Error:', parseError);
+        console.log('📄 [DEBUG] Response was not valid JSON, treating as plain text');
+        result = { message: responseText };
+      }
+      
+      // Handle backend proxy response format vs direct n8n response
+      let actualN8nResult = result;
+      if (usingBackendProxy && result && result.data) {
+        console.log('🔄 [DEBUG] Using backend proxy, extracting data field');
+        actualN8nResult = result.data;
+      }
       
       // Handle different response formats from n8n
       let botResponse = 'Task completed successfully!';
       
-      if (typeof result === 'string') {
-        botResponse = result;
-      } else if (result.response) {
-        botResponse = result.response;
-      } else if (result.output) {
-        botResponse = result.output;
-      } else if (result.text) {
-        botResponse = result.text;
-      } else if (result.message) {
-        botResponse = result.message;
+      console.log('🔄 [DEBUG] Processing response format, result type:', typeof actualN8nResult, actualN8nResult);
+      
+      if (typeof actualN8nResult === 'string') {
+        botResponse = actualN8nResult;
+        console.log('📝 [DEBUG] Using string response directly');
+      } else if (actualN8nResult && actualN8nResult.response) {
+        botResponse = actualN8nResult.response;
+        console.log('📝 [DEBUG] Using result.response field');
+      } else if (actualN8nResult && actualN8nResult.output) {
+        botResponse = actualN8nResult.output;
+        console.log('📝 [DEBUG] Using result.output field');
+      } else if (actualN8nResult && actualN8nResult.text) {
+        botResponse = actualN8nResult.text;
+        console.log('📝 [DEBUG] Using result.text field');
+      } else if (actualN8nResult && actualN8nResult.message) {
+        botResponse = actualN8nResult.message;
+        console.log('📝 [DEBUG] Using result.message field');
+      } else if (actualN8nResult && actualN8nResult.data) {
+        botResponse = JSON.stringify(actualN8nResult.data);
+        console.log('📝 [DEBUG] Using result.data field (stringified)');
+      } else if (actualN8nResult && actualN8nResult.raw) {
+        botResponse = actualN8nResult.raw;
+        console.log('📝 [DEBUG] Using result.raw field (from backend proxy)');
+      } else {
+        botResponse = JSON.stringify(actualN8nResult);
+        console.log('📝 [DEBUG] Using stringified full result');
       }
+
+      console.log('✅ [DEBUG] Final bot response:', botResponse);
 
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -104,12 +204,39 @@ const ChatInterface = () => {
       });
 
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error('❌ [DEBUG] Detailed error information:', {
+        error: error,
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
+        errorStack: error instanceof Error ? error.stack : 'No stack trace',
+        errorName: error instanceof Error ? error.name : 'Unknown error type',
+        webhookUrl: webhookUrl,
+        inputMessage: currentInput
+      });
+
+      // Check for specific error types
+      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+        console.error('🚫 [DEBUG] CORS/Network Error detected - this is likely a CORS issue or network connectivity problem');
+        console.log('💡 [DEBUG] Possible solutions:');
+        console.log('  1. n8n workflow might not be active');
+        console.log('  2. CORS headers not properly configured in n8n');
+        console.log('  3. Network connectivity issue');
+        console.log('  4. Webhook URL might be incorrect');
+      }
       
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'bot',
-        content: "I'm sorry, I encountered an error processing your request. Please make sure your n8n workflow is active and the webhook URL is configured correctly.",
+        content: `I'm sorry, I encountered an error processing your request. 
+
+Error Details: ${error instanceof Error ? error.message : 'Unknown error'}
+
+Please check:
+1. Your n8n workflow is active and running
+2. The webhook URL is correct: ${webhookUrl}
+3. Your n8n workflow has proper CORS settings
+4. Your internet connection is stable
+
+Check the browser console for detailed debugging information.`,
         timestamp: new Date(),
       };
 
@@ -117,7 +244,7 @@ const ChatInterface = () => {
       
       toast({
         title: "Connection Error",
-        description: "Please check your webhook configuration and ensure your n8n workflow is active",
+        description: "Check console for detailed error information",
         variant: "destructive",
       });
     } finally {
