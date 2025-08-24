@@ -1,9 +1,10 @@
 
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MessageCircle, FileText } from 'lucide-react';
+import { MessageCircle, FileText, Image } from 'lucide-react';
 import ChatInterface from '@/components/ChatInterface';
 import PDFUpload from '@/components/PDFUpload';
+import ImageUpload from '@/components/ImageUpload';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('chat');
@@ -11,7 +12,7 @@ const Index = () => {
   return (
     <div className="h-screen">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-        <TabsList className="w-full grid grid-cols-2 bg-white border-b shadow-sm">
+        <TabsList className="w-full grid grid-cols-3 bg-white border-b shadow-sm">
           <TabsTrigger 
             value="chat" 
             className="flex items-center gap-2 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700"
@@ -28,6 +29,14 @@ const Index = () => {
             <FileText className="w-4 h-4" />
             📄 Save PDF
           </TabsTrigger>
+          <TabsTrigger 
+            value="image" 
+            className="flex items-center gap-2 data-[state=active]:bg-purple-50 data-[state=active]:text-purple-700"
+            data-testid="image-tab"
+          >
+            <Image className="w-4 h-4" />
+            🖼️ Save Image
+          </TabsTrigger>
         </TabsList>
         
         <TabsContent value="chat" className="flex-1 m-0 overflow-hidden">
@@ -36,6 +45,10 @@ const Index = () => {
         
         <TabsContent value="pdf" className="flex-1 m-0 overflow-hidden">
           <PDFUpload />
+        </TabsContent>
+        
+        <TabsContent value="image" className="flex-1 m-0 overflow-hidden">
+          <ImageUpload />
         </TabsContent>
       </Tabs>
     </div>

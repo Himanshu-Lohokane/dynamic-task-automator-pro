@@ -12,8 +12,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // use storage to perform CRUD operations on the storage interface
   // e.g. storage.insertUser(user) or storage.getUserByUsername(username)
 
-  // Configure multer for file uploads
-  const upload = multer({
+  // Configure multer for PDF uploads
+  const uploadPDF = multer({
     storage: multer.memoryStorage(),
     limits: {
       fileSize: 10 * 1024 * 1024, // 10MB limit
@@ -23,6 +23,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         cb(null, true);
       } else {
         cb(new Error('Only PDF files are allowed!'));
+      }
+    },
+  });
+
+  // Configure multer for image uploads
+  const uploadImage = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+      fileSize: 10 * 1024 * 1024, // 10MB limit
+    },
+    fileFilter: (req, file, cb) => {
+      if (file.mimetype.startsWith('image/')) {
+        cb(null, true);
+      } else {
+        cb(new Error('Only image files are allowed!'));
       }
     },
   });
@@ -124,7 +139,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // PDF Upload endpoint
-  app.post("/api/upload-pdf", upload.single('file'), async (req, res) => {
+  app.post("/api/upload-pdf", uploadPDF.single('file'), async (req, res) => {
     try {
       log('📄 [PDF] Received PDF upload request');
       
@@ -226,6 +241,115 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(200).json({
         success: false,
         error: 'Internal server error while processing PDF upload',
+        details: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+
+  // Image Upload endpoint
+  app.post("/api/upload-image", uploadImage.single('file'), async (req, res) => {
+    try {
+      log('🖼️ [IMAGE] Received image upload request');
+      
+      if (!req.file) {
+        log('❌ [IMAGE] No file in request');
+        return res.status(400).json({ 
+          success: false,
+          error: 'No file uploaded',
+          received: req.body 
+        });
+      }
+
+      const { webhookUrl, fileName, timestamp } = req.body;
+      
+      if (!webhookUrl) {
+        log('❌ [IMAGE] Missing webhookUrl in request body');
+        return res.status(400).json({ 
+          success: false,
+          error: 'Missing webhookUrl in request body',
+          received: req.body 
+        });
+      }
+
+      log(`📋 [IMAGE] Processing file: ${req.file.originalname} (${req.file.size} bytes)`);
+      log(`📤 [IMAGE] Forwarding to n8n: ${webhookUrl}`);
+
+      // Prepare form data for n8n
+      const formData = new NodeFormData();
+      formData.append('file', new Blob([req.file.buffer], { type: req.file.mimetype }), req.file.originalname);
+      formData.append('fileName', fileName || req.file.originalname);
+      formData.append('timestamp', timestamp || new Date().toISOString());
+      formData.append('source', 'replit-image-uploader');
+
+      // Forward to n8n webhook
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        body: formData as any,
+        headers: {
+          'User-Agent': 'Replit-Image-Proxy/1.0',
+        }
+      });
+
+      log(`📥 [IMAGE] n8n response: ${response.status} ${response.statusText}`);
+
+      if (!response.ok) {
+        log(`❌ [IMAGE] n8n error: ${response.status} ${response.statusText}`);
+        return res.status(200).json({
+          success: false,
+          error: `n8n webhook returned ${response.status}: ${response.statusText}`,
+          details: {
+            status: response.status,
+            statusText: response.statusText,
+            webhookUrl: webhookUrl
+          }
+        });
+      }
+
+      // Get response text first to handle any format
+      const responseText = await response.text();
+      log(`📄 [IMAGE] Raw n8n response (full): "${responseText}"`);
+      log(`📏 [IMAGE] Response length: ${responseText.length} characters`);
+
+      let result;
+      try {
+        result = JSON.parse(responseText);
+        log('✅ [IMAGE] Parsed n8n JSON response successfully');
+      } catch (parseError) {
+        log('📝 [IMAGE] n8n response was not JSON, treating as text');
+        result = { message: responseText, raw: responseText };
+      }
+
+      // Return the result to frontend
+      const successResponse = {
+        success: true,
+        data: result,
+        timestamp: new Date().toISOString(),
+        source: 'replit-image-backend-proxy',
+        webhookUrl: webhookUrl,
+        fileName: req.file.originalname,
+        fileSize: req.file.size
+      };
+
+      log('✅ [IMAGE] Sending success response to frontend');
+      res.json(successResponse);
+
+    } catch (error) {
+      log(`❌ [IMAGE] Upload error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+
+      if (error instanceof multer.MulterError) {
+        if (error.code === 'LIMIT_FILE_SIZE') {
+          return res.status(200).json({
+            success: false,
+            error: 'File too large. Maximum size is 10MB.',
+            details: error.message
+          });
+        }
+      }
+
+      res.status(200).json({
+        success: false,
+        error: 'Internal server error while processing image upload',
         details: error instanceof Error ? error.message : 'Unknown error',
         timestamp: new Date().toISOString()
       });
