@@ -1,0 +1,23 @@
+🔍 [DEBUG] Browser debugging info: {userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWeb…cko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0', currentOrigin: 'https://707d9a90-3c3c-42ba-bb0c-7a7afda2af68-00-2hdt4p8q12jud.kirk.replit.dev', targetWebhook: 'https://kasimlohar.app.n8n.cloud/webhook-test/bdd9a358-e97e-4da2-8aed-6fd474dec5a7', timestamp: '2025-08-24T18:21:10.407Z'}
+ChatInterface.tsx:65 📤 [DEBUG] Sending message via backend proxy: {message: 'hello', originalWebhookUrl: 'https://kasimlohar.app.n8n.cloud/webhook-test/bdd9a358-e97e-4da2-8aed-6fd474dec5a7', requestPayload: {…}}
+ChatInterface.tsx:88 📥 [DEBUG] Backend proxy response received: {status: 200, statusText: 'OK', headers: {…}, url: 'https://707d9a90-3c3c-42ba-bb0c-7a7afda2af68-00-2hdt4p8q12jud.kirk.replit.dev/api/webhook/n8n', type: 'basic'}
+ChatInterface.tsx:107 ✅ [DEBUG] Backend proxy JSON response: {success: false, error: 'n8n webhook returned 404: Not Found', details: {…}}
+ChatInterface.tsx:111  ❌ [DEBUG] Backend proxy returned error: {success: false, error: 'n8n webhook returned 404: Not Found', details: {…}}details: {status: 404, statusText: 'Not Found', webhookUrl: 'https://kasimlohar.app.n8n.cloud/webhook-test/bdd9a358-e97e-4da2-8aed-6fd474dec5a7'}error: "n8n webhook returned 404: Not Found"success: false[[Prototype]]: Object
+handleSendMessage @ ChatInterface.tsx:111
+await in handleSendMessage
+callCallback2 @ react-dom.development.js:4164
+invokeGuardedCallbackDev @ react-dom.development.js:4213
+invokeGuardedCallback @ react-dom.development.js:4277
+invokeGuardedCallbackAndCatchFirstError @ react-dom.development.js:4291
+executeDispatch @ react-dom.development.js:9041
+processDispatchQueueItemsInOrder @ react-dom.development.js:9073
+processDispatchQueue @ react-dom.development.js:9086
+dispatchEventsForPlugins @ react-dom.development.js:9097
+(anonymous) @ react-dom.development.js:9288
+batchedUpdates$1 @ react-dom.development.js:26179
+batchedUpdates @ react-dom.development.js:3991
+dispatchEventForPluginEventSystem @ react-dom.development.js:9287
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ react-dom.development.js:6465
+dispatchEvent @ react-dom.development.js:6457
+dispatchDiscreteEvent @ react-dom.development.js:6430
+ChatInterface.tsx:167  ❌ [DEBUG] Detailed error information: 
