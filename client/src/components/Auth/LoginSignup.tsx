@@ -7,6 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from './AuthContext';
+import Spline from '@splinetool/react-spline';
 
 interface FormData {
   email: string;
@@ -204,15 +205,17 @@ const LoginSignup: React.FC = () => {
   }, [user]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-blue-50 via-purple-50 to-blue-50 dark:from-slate-900 dark:via-purple-900/20 dark:to-slate-900">
+    <div className="min-h-screen flex flex-col lg:flex-row bg-gradient-to-br from-blue-50 via-purple-50 to-blue-50 dark:from-slate-900 dark:via-purple-900/20 dark:to-slate-900">
       {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full opacity-20 blur-3xl animate-pulse" />
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-r from-purple-400 to-blue-500 rounded-full opacity-20 blur-3xl animate-pulse" />
       </div>
 
-      <div className="relative w-full max-w-md">
-        <Card className="glass glass-dark border-white/20 shadow-2xl backdrop-blur-xl animate-scale-in">
+      {/* Left side - Login Card */}
+      <div className="flex-1 flex items-center justify-center p-4 relative z-10 min-h-screen lg:min-h-0">
+        <div className="w-full max-w-md">
+          <Card className="glass glass-dark border-white/20 shadow-2xl backdrop-blur-xl animate-scale-in bg-white/90 dark:bg-slate-900/90">
           <CardHeader className="text-center space-y-4">
             {/* Logo/Icon */}
             <div className="mx-auto w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center animate-fade-in">
@@ -460,6 +463,17 @@ const LoginSignup: React.FC = () => {
             )}
           </CardContent>
         </Card>
+        </div>
+      </div>
+
+      {/* Right side - 3D Spline Component */}
+      <div className="hidden lg:flex flex-1 items-center justify-center relative overflow-hidden min-h-screen">
+        <div className="w-full h-full">
+          <Spline 
+            scene="https://prod.spline.design/aOlcecFdfZC0nLtw/scene.splinecode"
+            className="w-full h-full"
+          />
+        </div>
       </div>
     </div>
   );
