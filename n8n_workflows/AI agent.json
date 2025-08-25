@@ -29,7 +29,7 @@
       "typeVersion": 2.1,
       "position": [
         -32,
-        -64
+        -48
       ],
       "id": "ef9203fd-56e0-4335-a9ed-b7299d5b79e7",
       "name": "Webhook",
@@ -42,8 +42,8 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
       "typeVersion": 1,
       "position": [
-        0,
-        240
+        -32,
+        272
       ],
       "id": "7856a4d6-57fb-482f-931f-1eee91bd2618",
       "name": "Google Gemini Chat Model",
@@ -61,7 +61,7 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
       "position": [
-        656,
+        704,
         -80
       ],
       "id": "20bfba88-79ba-4fc2-a536-304572828534",
@@ -76,7 +76,7 @@
       "typeVersion": 1.3,
       "position": [
         208,
-        176
+        160
       ],
       "id": "a654f3f8-30c6-441d-8eec-a988565dedff",
       "name": "Simple Memory"
@@ -88,8 +88,8 @@
       "type": "@n8n/n8n-nodes-langchain.toolSerpApi",
       "typeVersion": 1,
       "position": [
-        336,
-        224
+        368,
+        256
       ],
       "id": "94a55f53-0589-4415-b0e7-522db91d9f18",
       "name": "SerpAPI",
@@ -116,7 +116,7 @@
       "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
       "typeVersion": 1.3,
       "position": [
-        544,
+        576,
         128
       ],
       "id": "0e0b0ff4-dfd8-46a8-bc19-a64228a3c3be",
@@ -240,7 +240,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "77cae00e-5c43-45d7-812b-ed8f239ca5e0",
+  "versionId": "d1ade7b2-aa09-48d3-b42a-42ac66bb74e0",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "6499e5de7985ff0038ea0e0c452fe8b107bfa42ac278b66233ecd909148ffaf0"
