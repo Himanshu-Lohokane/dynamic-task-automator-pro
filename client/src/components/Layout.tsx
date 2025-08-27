@@ -120,8 +120,8 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, onTabChange }) => 
               <Bot className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-900 dark:text-white gradient-text">Task Automator Pro</h1>
-              <p className="text-sm text-gray-600 dark:text-gray-300">AI-powered automation platform</p>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-white gradient-text">Singularity</h1>
+              <p className="text-sm text-gray-600 dark:text-gray-300">Advanced RAG Multimodal AI Agent</p>
             </div>
           </div>
 

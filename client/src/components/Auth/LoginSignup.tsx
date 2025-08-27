@@ -221,15 +221,14 @@ const LoginSignup: React.FC = () => {
             <div className="mx-auto w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center animate-fade-in">
               <Shield className="w-8 h-8 text-white" />
             </div>
-            
             <div className="space-y-2 animate-slide-in">
               <CardTitle className="text-2xl font-bold gradient-text">
-                {isLogin ? 'Welcome Back' : 'Create Account'}
+                Singularity
               </CardTitle>
               <CardDescription className="text-muted-foreground">
-                {isLogin 
-                  ? 'Sign in to your account to continue' 
-                  : 'Join us to start automating your tasks'
+                {isLogin
+                  ? 'Advanced RAG Multimodal AI Agent'
+                  : 'Create your account for advanced multimodal AI search and automation.'
                 }
               </CardDescription>
             </div>
