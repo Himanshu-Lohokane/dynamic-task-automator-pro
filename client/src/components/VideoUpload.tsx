@@ -27,9 +27,9 @@ const VideoUpload = () => {
 
   const getVideoWebhookUrl = () => {
     if (isProduction) {
-      return 'https://kasimlohar.app.n8n.cloud/webhook/9cb9c3ff-f43f-4579-b21b-30dafc30c87b';
+      return import.meta.env.VITE_N8N_VIDEO_WEBHOOK_URL;
     } else {
-      return 'https://kasimlohar.app.n8n.cloud/webhook-test/9cb9c3ff-f43f-4579-b21b-30dafc30c87b';
+      return import.meta.env.VITE_N8N_VIDEO_WEBHOOK_TEST_URL;
     }
   };
 

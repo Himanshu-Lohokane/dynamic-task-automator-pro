@@ -27,9 +27,9 @@ const ImageUpload = () => {
 
   const getImageWebhookUrl = () => {
     if (isProduction) {
-      return 'https://kasimlohar.app.n8n.cloud/webhook/image-ingest';
+      return import.meta.env.VITE_N8N_IMAGE_WEBHOOK_URL;
     } else {
-      return 'https://kasimlohar.app.n8n.cloud/webhook-test/image-ingest';
+      return import.meta.env.VITE_N8N_IMAGE_WEBHOOK_TEST_URL;
     }
   };
 

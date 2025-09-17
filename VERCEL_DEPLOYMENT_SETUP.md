@@ -17,18 +17,18 @@ Your application uses several n8n webhooks for different file types. You'll need
 ### Current Webhook Configuration:
 
 **Production Webhooks:**
-- **PDF Upload:** `https://kasimlohar.app.n8n.cloud/webhook/pdf-ingest`
-- **Image Upload:** `https://kasimlohar.app.n8n.cloud/webhook/image-ingest`
-- **Video Upload:** `https://kasimlohar.app.n8n.cloud/webhook/9cb9c3ff-f43f-4579-b21b-30dafc30c87b`
-- **Audio Upload:** `https://kasimlohar.app.n8n.cloud/webhook/2bb25d11-1ed8-4299-9ef4-f5bf091c3695`
-- **Chat Interface:** `https://kasimlohar.app.n8n.cloud/webhook/bdd9a358-e97e-4da2-8aed-6fd474dec5a7`
+- **PDF Upload:** `${VITE_N8N_PDF_WEBHOOK_URL}`
+- **Image Upload:** `${VITE_N8N_IMAGE_WEBHOOK_URL}`
+- **Video Upload:** `${VITE_N8N_VIDEO_WEBHOOK_URL}`
+- **Audio Upload:** `${VITE_N8N_AUDIO_WEBHOOK_URL}`
+- **Chat Interface:** `${VITE_N8N_CHAT_WEBHOOK_URL}`
 
 **Test Webhooks:**
-- **PDF Upload:** `https://kasimlohar.app.n8n.cloud/webhook-test/pdf-ingest`
-- **Image Upload:** `https://kasimlohar.app.n8n.cloud/webhook-test/image-ingest`
-- **Video Upload:** `https://kasimlohar.app.n8n.cloud/webhook-test/9cb9c3ff-f43f-4579-b21b-30dafc30c87b`
-- **Audio Upload:** `https://kasimlohar.app.n8n.cloud/webhook-test/2bb25d11-1ed8-4299-9ef4-f5bf091c3695`
-- **Chat Interface:** `https://kasimlohar.app.n8n.cloud/webhook-test/bdd9a358-e97e-4da2-8aed-6fd474dec5a7`
+- **PDF Upload:** `${VITE_N8N_PDF_WEBHOOK_TEST_URL}`
+- **Image Upload:** `${VITE_N8N_IMAGE_WEBHOOK_TEST_URL}`
+- **Video Upload:** `${VITE_N8N_VIDEO_WEBHOOK_TEST_URL}`
+- **Audio Upload:** `${VITE_N8N_AUDIO_WEBHOOK_TEST_URL}`
+- **Chat Interface:** `${VITE_N8N_CHAT_WEBHOOK_TEST_URL}`
 
 
 1. **Push Code to GitHub:**

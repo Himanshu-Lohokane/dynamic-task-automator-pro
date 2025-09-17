@@ -27,9 +27,9 @@ const AudioUpload = () => {
 
   const getAudioWebhookUrl = () => {
     if (isProduction) {
-      return 'https://kasimlohar.app.n8n.cloud/webhook/2bb25d11-1ed8-4299-9ef4-f5bf091c3695';
+      return import.meta.env.VITE_N8N_AUDIO_WEBHOOK_URL;
     } else {
-      return 'https://kasimlohar.app.n8n.cloud/webhook-test/2bb25d11-1ed8-4299-9ef4-f5bf091c3695';
+      return import.meta.env.VITE_N8N_AUDIO_WEBHOOK_TEST_URL;
     }
   };
 

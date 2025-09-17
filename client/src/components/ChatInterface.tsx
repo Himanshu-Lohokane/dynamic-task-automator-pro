@@ -53,9 +53,9 @@ const ChatInterface = () => {
 
   const getWebhookUrl = () => {
     if (isProduction) {
-      return 'https://kasimlohar.app.n8n.cloud/webhook/bdd9a358-e97e-4da2-8aed-6fd474dec5a7';
+      return import.meta.env.VITE_N8N_CHAT_WEBHOOK_URL;
     } else {
-      return 'https://kasimlohar.app.n8n.cloud/webhook-test/bdd9a358-e97e-4da2-8aed-6fd474dec5a7';
+      return import.meta.env.VITE_N8N_CHAT_WEBHOOK_TEST_URL;
     }
   };
 
