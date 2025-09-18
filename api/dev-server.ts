@@ -247,14 +247,32 @@ app.post("/api/upload-pdf", uploadPDF.single('file'), async (req, res) => {
     }
 
     const responseText = await response.text();
-    console.log(`📄 [PDF] Raw n8n response: "${responseText}"`);
+    // Truncate for logging if too long
+    const truncatedText = responseText.length > 300 
+      ? responseText.substring(0, 300) + '... (truncated)'
+      : responseText;
+    console.log(`📄 [PDF] Raw n8n response (${responseText.length} chars): "${truncatedText}"`);
 
     let result;
     try {
       result = JSON.parse(responseText);
       console.log('✅ [PDF] Parsed n8n JSON response successfully');
-    } catch (parseError) {
-      console.log('📝 [PDF] n8n response was not JSON, treating as text');
+    } catch (error) {
+      console.log('📝 [PDF] n8n response was not JSON');
+      
+      // Check if it looks like HTML
+      if (responseText.includes('<!DOCTYPE html>') || responseText.includes('<html')) {
+        console.log('⚠️ [PDF] Received HTML instead of JSON - this may be a 404 page or server error');
+        // Format it in a more user-friendly way for debugging
+        return res.status(200).json({ 
+          success: false,
+          error: 'Server responded with HTML page instead of JSON. This often means the URL is not accepting file uploads.',
+          details: 'Check your n8n server configuration and ensure the webhook URL is correct.',
+          responsePreview: truncatedText.substring(0, 100)
+        });
+      }
+      
+      // Otherwise, try to use as text
       result = { message: responseText, raw: responseText };
     }
 
@@ -333,6 +351,9 @@ app.post("/api/upload-image", uploadImage.single('file'), async (req, res) => {
 
     console.log(`📋 [IMAGE] Processing file: ${req.file.originalname} (${req.file.size} bytes)`);
     console.log(`📤 [IMAGE] Forwarding to n8n: ${webhookUrl}`);
+    
+    // Additional connection debugging info
+    console.log(`🔌 [IMAGE] Connection details: ${new URL(webhookUrl).host}, SSL: ${webhookUrl.startsWith('https')}`);
 
     const formData = new NodeFormData();
     formData.append('file', new Blob([req.file.buffer], { type: req.file.mimetype }), req.file.originalname);
@@ -364,14 +385,32 @@ app.post("/api/upload-image", uploadImage.single('file'), async (req, res) => {
     }
 
     const responseText = await response.text();
-    console.log(`📄 [IMAGE] Raw n8n response: "${responseText}"`);
+    // Truncate for logging if too long
+    const truncatedText = responseText.length > 300 
+      ? responseText.substring(0, 300) + '... (truncated)'
+      : responseText;
+    console.log(`📄 [IMAGE] Raw n8n response (${responseText.length} chars): "${truncatedText}"`);
 
     let result;
     try {
       result = JSON.parse(responseText);
       console.log('✅ [IMAGE] Parsed n8n JSON response successfully');
-    } catch (parseError) {
-      console.log('📝 [IMAGE] n8n response was not JSON, treating as text');
+    } catch (error) {
+      console.log('📝 [IMAGE] n8n response was not JSON');
+      
+      // Check if it looks like HTML
+      if (responseText.includes('<!DOCTYPE html>') || responseText.includes('<html')) {
+        console.log('⚠️ [IMAGE] Received HTML instead of JSON - this may be a 404 page or server error');
+        // Format it in a more user-friendly way for debugging
+        return res.status(200).json({ 
+          success: false,
+          error: 'Server responded with HTML page instead of JSON. This often means the URL is not accepting file uploads.',
+          details: 'Check your n8n server configuration and ensure the webhook URL is correct.',
+          responsePreview: truncatedText.substring(0, 100)
+        });
+      }
+      
+      // Otherwise, try to use as text
       result = { message: responseText, raw: responseText };
     }
 
@@ -481,14 +520,32 @@ app.post("/api/upload-video", uploadVideo.single('file'), async (req, res) => {
     }
 
     const responseText = await response.text();
-    console.log(`📄 [VIDEO] Raw n8n response: "${responseText}"`);
+    // Truncate for logging if too long
+    const truncatedText = responseText.length > 300 
+      ? responseText.substring(0, 300) + '... (truncated)'
+      : responseText;
+    console.log(`📄 [VIDEO] Raw n8n response (${responseText.length} chars): "${truncatedText}"`);
 
     let result;
     try {
       result = JSON.parse(responseText);
       console.log('✅ [VIDEO] Parsed n8n JSON response successfully');
-    } catch (parseError) {
-      console.log('📝 [VIDEO] n8n response was not JSON, treating as text');
+    } catch (error) {
+      console.log('📝 [VIDEO] n8n response was not JSON');
+      
+      // Check if it looks like HTML
+      if (responseText.includes('<!DOCTYPE html>') || responseText.includes('<html')) {
+        console.log('⚠️ [VIDEO] Received HTML instead of JSON - this may be a 404 page or server error');
+        // Format it in a more user-friendly way for debugging
+        return res.status(200).json({ 
+          success: false,
+          error: 'Server responded with HTML page instead of JSON. This often means the URL is not accepting file uploads.',
+          details: 'Check your n8n server configuration and ensure the webhook URL is correct.',
+          responsePreview: truncatedText.substring(0, 100)
+        });
+      }
+      
+      // Otherwise, try to use as text
       result = { message: responseText, raw: responseText };
     }
 
@@ -598,14 +655,32 @@ app.post("/api/upload-audio", uploadAudio.single('file'), async (req, res) => {
     }
 
     const responseText = await response.text();
-    console.log(`📄 [AUDIO] Raw n8n response: "${responseText}"`);
+    // Truncate for logging if too long
+    const truncatedText = responseText.length > 300 
+      ? responseText.substring(0, 300) + '... (truncated)'
+      : responseText;
+    console.log(`📄 [AUDIO] Raw n8n response (${responseText.length} chars): "${truncatedText}"`);
 
     let result;
     try {
       result = JSON.parse(responseText);
       console.log('✅ [AUDIO] Parsed n8n JSON response successfully');
-    } catch (parseError) {
-      console.log('📝 [AUDIO] n8n response was not JSON, treating as text');
+    } catch (error) {
+      console.log('📝 [AUDIO] n8n response was not JSON');
+      
+      // Check if it looks like HTML
+      if (responseText.includes('<!DOCTYPE html>') || responseText.includes('<html')) {
+        console.log('⚠️ [AUDIO] Received HTML instead of JSON - this may be a 404 page or server error');
+        // Format it in a more user-friendly way for debugging
+        return res.status(200).json({ 
+          success: false,
+          error: 'Server responded with HTML page instead of JSON. This often means the URL is not accepting file uploads.',
+          details: 'Check your n8n server configuration and ensure the webhook URL is correct.',
+          responsePreview: truncatedText.substring(0, 100)
+        });
+      }
+      
+      // Otherwise, try to use as text
       result = { message: responseText, raw: responseText };
     }
 
