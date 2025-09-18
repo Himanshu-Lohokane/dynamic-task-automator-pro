@@ -1,3 +1,16 @@
+// Load environment variables first, before any other imports
+import * as dotenv from 'dotenv';
+dotenv.config({ path: '.env.local' });
+
+// Log all environment variables to help debug
+console.log('🔍 [ENV] Available environment variables:', {
+  VITE_N8N_PDF_WEBHOOK_URL: process.env.VITE_N8N_PDF_WEBHOOK_URL,
+  VITE_N8N_IMAGE_WEBHOOK_URL: process.env.VITE_N8N_IMAGE_WEBHOOK_URL,
+  VITE_N8N_VIDEO_WEBHOOK_URL: process.env.VITE_N8N_VIDEO_WEBHOOK_URL,
+  VITE_N8N_AUDIO_WEBHOOK_URL: process.env.VITE_N8N_AUDIO_WEBHOOK_URL,
+  VITE_N8N_CHAT_WEBHOOK_URL: process.env.VITE_N8N_CHAT_WEBHOOK_URL
+});
+
 import express from 'express';
 import { createServer } from 'http';
 import { storage } from '../server/storage';
@@ -63,7 +76,8 @@ app.post("/api/webhook/n8n", async (req, res) => {
     console.log('🔄 [WEBHOOK] Received proxy request');
     console.log(`📋 [WEBHOOK] Request body: ${JSON.stringify(req.body)}`);
 
-    const { message, timestamp, source, webhookUrl } = req.body;
+    const { message, timestamp, source } = req.body;
+    let { webhookUrl } = req.body;
     
     if (!message) {
       console.log('❌ [WEBHOOK] Missing message in request body');
@@ -75,12 +89,25 @@ app.post("/api/webhook/n8n", async (req, res) => {
     }
 
     if (!webhookUrl) {
-      console.log('❌ [WEBHOOK] Missing webhookUrl in request body');
-      return res.status(400).json({ 
-        success: false,
-        error: 'Missing webhookUrl in request body',
-        received: req.body 
+      const isTestMode = req.headers['x-n8n-test-mode'] === 'true';
+      webhookUrl = isTestMode 
+        ? process.env.VITE_N8N_CHAT_WEBHOOK_TEST_URL 
+        : process.env.VITE_N8N_CHAT_WEBHOOK_URL;
+      
+      console.log('🔍 [DEBUG] CHAT backend using fallback webhook URL:', {
+        webhookUrl,
+        isTestMode,
+        env: process.env.VITE_N8N_CHAT_WEBHOOK_URL
       });
+
+      if (!webhookUrl) {
+        console.log('❌ [WEBHOOK] Missing webhookUrl in request body and environment variables');
+        return res.status(400).json({ 
+          success: false,
+          error: 'Missing webhookUrl in request body and environment variables',
+          received: req.body 
+        });
+      }
     }
     
     console.log(`📤 [WEBHOOK] Forwarding to n8n: ${webhookUrl}`);
@@ -163,15 +190,28 @@ app.post("/api/upload-pdf", uploadPDF.single('file'), async (req, res) => {
       });
     }
 
-    const { webhookUrl, fileName, timestamp } = req.body;
+    let { webhookUrl, fileName, timestamp } = req.body;
     
     if (!webhookUrl) {
-      console.log('❌ [PDF] Missing webhookUrl in request body');
-      return res.status(400).json({ 
-        success: false,
-        error: 'Missing webhookUrl in request body',
-        received: req.body 
+      const isTestMode = req.headers['x-n8n-test-mode'] === 'true';
+      webhookUrl = isTestMode 
+        ? process.env.VITE_N8N_PDF_WEBHOOK_TEST_URL 
+        : process.env.VITE_N8N_PDF_WEBHOOK_URL;
+      
+      console.log('🔍 [DEBUG] PDF backend using fallback webhook URL:', {
+        webhookUrl,
+        isTestMode,
+        env: process.env.VITE_N8N_PDF_WEBHOOK_URL
       });
+
+      if (!webhookUrl) {
+        console.log('❌ [PDF] Missing webhookUrl in request body and environment variables');
+        return res.status(400).json({ 
+          success: false,
+          error: 'Missing webhookUrl in request body and environment variables',
+          received: req.body 
+        });
+      }
     }
 
     console.log(`📋 [PDF] Processing file: ${req.file.originalname} (${req.file.size} bytes)`);
@@ -267,15 +307,28 @@ app.post("/api/upload-image", uploadImage.single('file'), async (req, res) => {
       });
     }
 
-    const { webhookUrl, fileName, timestamp } = req.body;
-    
+    let { webhookUrl, fileName, timestamp } = req.body;
+    // Fallback to env if not provided
     if (!webhookUrl) {
-      console.log('❌ [IMAGE] Missing webhookUrl in request body');
-      return res.status(400).json({ 
-        success: false,
-        error: 'Missing webhookUrl in request body',
-        received: req.body 
+      const isTestMode = req.headers['x-n8n-test-mode'] === 'true';
+      webhookUrl = isTestMode 
+        ? process.env.VITE_N8N_IMAGE_WEBHOOK_TEST_URL 
+        : process.env.VITE_N8N_IMAGE_WEBHOOK_URL;
+
+      console.log('🔍 [DEBUG] Backend using fallback webhook URL:', {
+        webhookUrl,
+        isTestMode,
+        env: process.env.VITE_N8N_IMAGE_WEBHOOK_URL
       });
+      
+      if (!webhookUrl) {
+        console.log('❌ [IMAGE] Missing webhookUrl in request body and environment variables');
+        return res.status(400).json({ 
+          success: false,
+          error: 'Missing webhookUrl in request body and environment variables',
+          received: req.body 
+        });
+      }
     }
 
     console.log(`📋 [IMAGE] Processing file: ${req.file.originalname} (${req.file.size} bytes)`);
@@ -371,15 +424,28 @@ app.post("/api/upload-video", uploadVideo.single('file'), async (req, res) => {
       });
     }
 
-    const { webhookUrl, fileName, timestamp } = req.body;
+    let { webhookUrl, fileName, timestamp } = req.body;
     
     if (!webhookUrl) {
-      console.log('❌ [VIDEO] Missing webhookUrl in request body');
-      return res.status(400).json({ 
-        success: false,
-        error: 'Missing webhookUrl in request body',
-        received: req.body 
+      const isTestMode = req.headers['x-n8n-test-mode'] === 'true';
+      webhookUrl = isTestMode 
+        ? process.env.VITE_N8N_VIDEO_WEBHOOK_TEST_URL 
+        : process.env.VITE_N8N_VIDEO_WEBHOOK_URL;
+      
+      console.log('🔍 [DEBUG] VIDEO backend using fallback webhook URL:', {
+        webhookUrl,
+        isTestMode,
+        env: process.env.VITE_N8N_VIDEO_WEBHOOK_URL
       });
+
+      if (!webhookUrl) {
+        console.log('❌ [VIDEO] Missing webhookUrl in request body and environment variables');
+        return res.status(400).json({ 
+          success: false,
+          error: 'Missing webhookUrl in request body and environment variables',
+          received: req.body 
+        });
+      }
     }
 
     console.log(`📋 [VIDEO] Processing file: ${req.file.originalname} (${req.file.size} bytes)`);
@@ -475,15 +541,28 @@ app.post("/api/upload-audio", uploadAudio.single('file'), async (req, res) => {
       });
     }
 
-    const { webhookUrl, fileName, timestamp } = req.body;
+    let { webhookUrl, fileName, timestamp } = req.body;
     
     if (!webhookUrl) {
-      console.log('❌ [AUDIO] Missing webhookUrl in request body');
-      return res.status(400).json({ 
-        success: false,
-        error: 'Missing webhookUrl in request body',
-        received: req.body 
+      const isTestMode = req.headers['x-n8n-test-mode'] === 'true';
+      webhookUrl = isTestMode 
+        ? process.env.VITE_N8N_AUDIO_WEBHOOK_TEST_URL 
+        : process.env.VITE_N8N_AUDIO_WEBHOOK_URL;
+      
+      console.log('🔍 [DEBUG] AUDIO backend using fallback webhook URL:', {
+        webhookUrl,
+        isTestMode,
+        env: process.env.VITE_N8N_AUDIO_WEBHOOK_URL
       });
+
+      if (!webhookUrl) {
+        console.log('❌ [AUDIO] Missing webhookUrl in request body and environment variables');
+        return res.status(400).json({ 
+          success: false,
+          error: 'Missing webhookUrl in request body and environment variables',
+          received: req.body 
+        });
+      }
     }
 
     console.log(`📋 [AUDIO] Processing file: ${req.file.originalname} (${req.file.size} bytes)`);
@@ -574,10 +653,24 @@ app.get('*', (req, res) => {
 });
 
 const httpServer = createServer(app);
-const port = process.env.PORT || 5000;
+const port = Number(process.env.PORT || 5000);
+
+// Attempt to handle EADDRINUSE more gracefully
+httpServer.on('error', (error: any) => {
+  if (error.code === 'EADDRINUSE') {
+    console.error(`❌ Port ${port} is already in use. Try manually killing the process:`);
+    console.error(`   PowerShell: netstat -ano | findstr :${port}`);
+    console.error(`   Then: taskkill /PID <PID> /F`);
+    console.error(`   Or try: npm run dev -- --port ${port + 1}`);
+    process.exit(1);
+  } else {
+    console.error('❌ Server error:', error);
+    process.exit(1);
+  }
+});
 
 httpServer.listen(port, () => {
-  console.log(`🚀 Dev server running on port ${port}`);
+  console.log(`\n🚀 Dev server running on port ${port}`);
   console.log(`📱 Frontend: http://localhost:${port}`);
   console.log(`🔌 API: http://localhost:${port}/api`);
   console.log(`🔄 n8n Webhook: http://localhost:${port}/api/webhook/n8n`);
@@ -585,4 +678,5 @@ httpServer.listen(port, () => {
   console.log(`🖼️ Image Upload: http://localhost:${port}/api/upload-image`);
   console.log(`🎬 Video Upload: http://localhost:${port}/api/upload-video`);
   console.log(`🎵 Audio Upload: http://localhost:${port}/api/upload-audio`);
+  console.log('\n✅ Environment variables loaded successfully!');
 });

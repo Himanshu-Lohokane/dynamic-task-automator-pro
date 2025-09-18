@@ -26,11 +26,20 @@ const ImageUpload = () => {
   });
 
   const getImageWebhookUrl = () => {
-    if (isProduction) {
-      return import.meta.env.VITE_N8N_IMAGE_WEBHOOK_URL;
-    } else {
-      return import.meta.env.VITE_N8N_IMAGE_WEBHOOK_TEST_URL;
-    }
+    const url = isProduction 
+      ? import.meta.env.VITE_N8N_IMAGE_WEBHOOK_URL
+      : import.meta.env.VITE_N8N_IMAGE_WEBHOOK_TEST_URL;
+    
+    console.log('🔍 [DEBUG] Frontend webhook URL:', {
+      isProduction,
+      url,
+      env: {
+        prod: import.meta.env.VITE_N8N_IMAGE_WEBHOOK_URL,
+        test: import.meta.env.VITE_N8N_IMAGE_WEBHOOK_TEST_URL
+      }
+    });
+    
+    return url;
   };
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {

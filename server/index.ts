@@ -1,3 +1,16 @@
+// Load environment variables first
+import * as dotenv from 'dotenv';
+dotenv.config({ path: '.env.local' });
+
+// Log loaded environment variables to help with debugging
+console.log('🔧 [SERVER] Environment variables loaded:', {
+  VITE_N8N_IMAGE_WEBHOOK_URL: process.env.VITE_N8N_IMAGE_WEBHOOK_URL,
+  VITE_N8N_PDF_WEBHOOK_URL: process.env.VITE_N8N_PDF_WEBHOOK_URL,
+  VITE_N8N_VIDEO_WEBHOOK_URL: process.env.VITE_N8N_VIDEO_WEBHOOK_URL,
+  VITE_N8N_AUDIO_WEBHOOK_URL: process.env.VITE_N8N_AUDIO_WEBHOOK_URL,
+  VITE_N8N_CHAT_WEBHOOK_URL: process.env.VITE_N8N_CHAT_WEBHOOK_URL
+});
+
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
