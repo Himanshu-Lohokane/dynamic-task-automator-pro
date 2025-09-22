@@ -26,20 +26,37 @@ const ImageUpload = () => {
   });
 
   const getImageWebhookUrl = () => {
-    const url = isProduction 
-      ? import.meta.env.VITE_N8N_IMAGE_WEBHOOK_URL
-      : import.meta.env.VITE_N8N_IMAGE_WEBHOOK_TEST_URL;
+    const productionUrl = import.meta.env.VITE_N8N_IMAGE_WEBHOOK_URL;
+    const testUrl = import.meta.env.VITE_N8N_IMAGE_WEBHOOK_TEST_URL;
     
-    console.log('🔍 [DEBUG] Frontend webhook URL:', {
+    console.log('🔍 [IMAGE] Environment variables:', {
+      productionUrl,
+      testUrl,
       isProduction,
-      url,
-      env: {
-        prod: import.meta.env.VITE_N8N_IMAGE_WEBHOOK_URL,
-        test: import.meta.env.VITE_N8N_IMAGE_WEBHOOK_TEST_URL
-      }
+      allEnvVars: import.meta.env
     });
-    
-    return url;
+
+    if (isProduction) {
+      if (!productionUrl) {
+        console.error('❌ [IMAGE] Production webhook URL is undefined!');
+        toast({
+          title: "Configuration Error",
+          description: "Production webhook URL is not configured. Please check Vercel environment variables.",
+          variant: "destructive",
+        });
+      }
+      return productionUrl;
+    } else {
+      if (!testUrl) {
+        console.error('❌ [IMAGE] Test webhook URL is undefined!');
+        toast({
+          title: "Configuration Error", 
+          description: "Test webhook URL is not configured. Please check environment variables.",
+          variant: "destructive",
+        });
+      }
+      return testUrl;
+    }
   };
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -79,6 +96,17 @@ const ImageUpload = () => {
       return;
     }
 
+    const webhookUrl = getImageWebhookUrl();
+    if (!webhookUrl) {
+      console.error('❌ [IMAGE] Cannot upload: Webhook URL is undefined');
+      toast({
+        title: "Configuration Error",
+        description: "Webhook URL is not configured. Please check environment variables.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsUploading(true);
     setUploadProgress(0);
     setUploadResult(null);
@@ -93,7 +121,7 @@ const ImageUpload = () => {
     try {
       const formData = new FormData();
       formData.append('file', selectedFile);
-      formData.append('webhookUrl', getImageWebhookUrl());
+      formData.append('webhookUrl', webhookUrl);
       formData.append('fileName', selectedFile.name);
       formData.append('timestamp', new Date().toISOString());
 

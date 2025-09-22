@@ -26,10 +26,36 @@ const VideoUpload = () => {
   });
 
   const getVideoWebhookUrl = () => {
+    const productionUrl = import.meta.env.VITE_N8N_VIDEO_WEBHOOK_URL;
+    const testUrl = import.meta.env.VITE_N8N_VIDEO_WEBHOOK_TEST_URL;
+    
+    console.log('🎥 [VIDEO] Environment variables:', {
+      productionUrl,
+      testUrl,
+      isProduction,
+      allEnvVars: import.meta.env
+    });
+
     if (isProduction) {
-      return import.meta.env.VITE_N8N_VIDEO_WEBHOOK_URL;
+      if (!productionUrl) {
+        console.error('❌ [VIDEO] Production webhook URL is undefined!');
+        toast({
+          title: "Configuration Error",
+          description: "Production webhook URL is not configured. Please check Vercel environment variables.",
+          variant: "destructive",
+        });
+      }
+      return productionUrl;
     } else {
-      return import.meta.env.VITE_N8N_VIDEO_WEBHOOK_TEST_URL;
+      if (!testUrl) {
+        console.error('❌ [VIDEO] Test webhook URL is undefined!');
+        toast({
+          title: "Configuration Error", 
+          description: "Test webhook URL is not configured. Please check environment variables.",
+          variant: "destructive",
+        });
+      }
+      return testUrl;
     }
   };
 
@@ -70,6 +96,17 @@ const VideoUpload = () => {
       return;
     }
 
+    const webhookUrl = getVideoWebhookUrl();
+    if (!webhookUrl) {
+      console.error('❌ [VIDEO] Cannot upload: Webhook URL is undefined');
+      toast({
+        title: "Configuration Error",
+        description: "Webhook URL is not configured. Please check environment variables.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsUploading(true);
     setUploadProgress(0);
     setUploadResult(null);
@@ -84,7 +121,7 @@ const VideoUpload = () => {
     try {
       const formData = new FormData();
       formData.append('file', selectedFile);
-      formData.append('webhookUrl', getVideoWebhookUrl());
+      formData.append('webhookUrl', webhookUrl);
       formData.append('fileName', selectedFile.name);
       formData.append('timestamp', new Date().toISOString());
 

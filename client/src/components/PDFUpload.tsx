@@ -26,10 +26,36 @@ const PDFUpload = () => {
   });
 
   const getPDFWebhookUrl = () => {
+    const productionUrl = import.meta.env.VITE_N8N_PDF_WEBHOOK_URL;
+    const testUrl = import.meta.env.VITE_N8N_PDF_WEBHOOK_TEST_URL;
+    
+    console.log('🔗 [PDF] Environment variables:', {
+      productionUrl,
+      testUrl,
+      isProduction,
+      allEnvVars: import.meta.env
+    });
+
     if (isProduction) {
-      return import.meta.env.VITE_N8N_PDF_WEBHOOK_URL;
+      if (!productionUrl) {
+        console.error('❌ [PDF] Production webhook URL is undefined!');
+        toast({
+          title: "Configuration Error",
+          description: "Production webhook URL is not configured. Please check Vercel environment variables.",
+          variant: "destructive",
+        });
+      }
+      return productionUrl;
     } else {
-      return import.meta.env.VITE_N8N_PDF_WEBHOOK_TEST_URL;
+      if (!testUrl) {
+        console.error('❌ [PDF] Test webhook URL is undefined!');
+        toast({
+          title: "Configuration Error", 
+          description: "Test webhook URL is not configured. Please check environment variables.",
+          variant: "destructive",
+        });
+      }
+      return testUrl;
     }
   };
 
@@ -70,6 +96,17 @@ const PDFUpload = () => {
       return;
     }
 
+    const webhookUrl = getPDFWebhookUrl();
+    if (!webhookUrl) {
+      console.error('❌ [PDF] Cannot upload: Webhook URL is undefined');
+      toast({
+        title: "Configuration Error",
+        description: "Webhook URL is not configured. Please check environment variables.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsUploading(true);
     setUploadProgress(0);
     setUploadResult(null);
@@ -84,7 +121,7 @@ const PDFUpload = () => {
     try {
       const formData = new FormData();
       formData.append('file', selectedFile);
-      formData.append('webhookUrl', getPDFWebhookUrl());
+      formData.append('webhookUrl', webhookUrl);
       formData.append('fileName', selectedFile.name);
       formData.append('timestamp', new Date().toISOString());
 
