@@ -119,11 +119,22 @@ const VideoUpload = () => {
     });
 
     try {
-      const formData = new FormData();
-      formData.append('file', selectedFile);
-      formData.append('webhookUrl', webhookUrl);
-      formData.append('fileName', selectedFile.name);
-      formData.append('timestamp', new Date().toISOString());
+      // Convert file to base64 for Vercel compatibility
+      const fileBase64 = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target?.result as string);
+        reader.readAsDataURL(selectedFile);
+      });
+
+      // Send as JSON instead of FormData for better Vercel compatibility
+      const payload = {
+        file: fileBase64,
+        webhookUrl: webhookUrl,
+        fileName: selectedFile.name,
+        fileType: selectedFile.type,
+        fileSize: selectedFile.size,
+        timestamp: new Date().toISOString()
+      };
 
       // Simulate progress for large video files
       const progressInterval = setInterval(() => {
@@ -138,7 +149,10 @@ const VideoUpload = () => {
 
       const response = await fetch('/api/upload-video', {
         method: 'POST',
-        body: formData,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
       });
 
       clearInterval(progressInterval);

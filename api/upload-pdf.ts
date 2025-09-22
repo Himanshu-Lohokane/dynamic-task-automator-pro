@@ -9,34 +9,58 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     console.log('📄 [PDF] Received PDF upload request');
+    console.log('🔍 [PDF] Request headers:', req.headers);
+    console.log('🔍 [PDF] Content type:', req.headers['content-type']);
     
-    // Check if we have form data
-    if (!req.body || !req.body.file) {
-      console.log('❌ [PDF] No file in request');
+    if (!req.body) {
+      console.log('❌ [PDF] No request body');
       return res.status(400).json({ 
         success: false,
-        error: 'No file uploaded',
-        received: req.body 
+        error: 'No request body received'
       });
     }
 
-    const { webhookUrl, fileName, timestamp } = req.body;
+    // Extract data from the JSON request
+    const { webhookUrl, fileName, timestamp, file, fileType, fileSize } = req.body;
     
+    if (!file) {
+      console.log('❌ [PDF] No file in request body');
+      return res.status(400).json({ 
+        success: false,
+        error: 'No file uploaded - file field missing',
+        received: {
+          hasWebhookUrl: !!webhookUrl,
+          hasFileName: !!fileName,
+          hasTimestamp: !!timestamp,
+          bodyKeys: Object.keys(req.body || {})
+        }
+      });
+    }
+
     if (!webhookUrl) {
       console.log('❌ [PDF] Missing webhookUrl in request body');
       return res.status(400).json({ 
         success: false,
         error: 'Missing webhookUrl in request body',
-        received: req.body 
+        received: {
+          hasFile: !!file,
+          hasFileName: !!fileName,
+          bodyKeys: Object.keys(req.body || {})
+        }
       });
     }
 
-    console.log(`📋 [PDF] Processing file: ${fileName} (${req.body.file.length} bytes)`);
+    console.log(`📋 [PDF] Processing file: ${fileName} (${fileSize} bytes)`);
     console.log(`📤 [PDF] Forwarding to n8n: ${webhookUrl}`);
 
-    // Prepare form data for n8n
+    // Create FormData for n8n - handle base64 data
     const formData = new FormData();
-    formData.append('file', new Blob([req.body.file], { type: 'application/pdf' }), fileName);
+    
+    // Convert base64 to buffer
+    const base64Data = file.split(',')[1] || file;
+    const fileBuffer = Buffer.from(base64Data, 'base64');
+    
+    formData.append('file', new Blob([fileBuffer], { type: fileType || 'application/pdf' }), fileName);
     formData.append('fileName', fileName);
     formData.append('timestamp', timestamp || new Date().toISOString());
     formData.append('source', 'vercel-pdf-uploader');
